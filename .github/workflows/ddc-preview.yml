@@ -1,0 +1,74 @@
+name: Build DDC trial packages
+on:
+  push:
+    branches: ['build/ddc-preview-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_RELEASE_LTO: 'false'
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: '8'
+  CMAKE_POLICY_VERSION_MINIMUM: '3.5'
+  PYTHONUTF8: '1'
+jobs:
+  package:
+    if: github.repository == 'xp-Yang/oink'
+    timeout-minutes: 95
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: aarch64-apple-darwin
+            artifact: Oink-DDC-macOS-arm64
+            jobs: '3'
+          - runner: windows-2022
+            target: x86_64-pc-windows-msvc
+            artifact: Oink-DDC-Windows-x64
+            jobs: '4'
+    runs-on: ${{ matrix.runner }}
+    env:
+      CARGO_BUILD_JOBS: ${{ matrix.jobs }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f
+        with:
+          toolchain: '1.99.0'
+          targets: ${{ matrix.target }}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.14.6'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24.14.1'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Pin npm
+        run: npm install --global npm@11.11.0
+      - name: Build and smoke-test Mac app
+        if: runner.os == 'macOS'
+        run: python packaging/macos/ddc_preview.py --sequence 900 --staging "$RUNNER_TEMP/ddc-stage" --output "$RUNNER_TEMP/ddc-dist"
+      - name: Build and inspect Windows MSI
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python build-support/package.py --public-version --platform windows --sequence 900 --output-root "$env:RUNNER_TEMP/ddc-stage" --tool-cache "$env:RUNNER_TEMP/package-tools"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $packages = @(Get-ChildItem -Path "$env:RUNNER_TEMP/ddc-stage" -Recurse -File -Filter '*.msi')
+          if ($packages.Count -ne 1) { throw "Expected exactly one built MSI" }
+          $dist = New-Item -ItemType Directory "$env:RUNNER_TEMP/ddc-dist"
+          $msi = Join-Path $dist.FullName 'Oink-DDC-0.3.7-Windows-x64.msi'
+          Copy-Item -LiteralPath $packages[0].FullName -Destination $msi
+          Copy-Item DDC.md $dist.FullName
+          $hash = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  Oink-DDC-0.3.7-Windows-x64.msi" | Set-Content -Encoding ascii (Join-Path $dist.FullName SHA256SUMS)
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ runner.temp }}/ddc-dist/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
