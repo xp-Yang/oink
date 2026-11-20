@@ -79,6 +79,10 @@ pub enum InputCommand {
     },
     ReturnPointerHome,
     MovePointerTo(oink_foundation::DeviceId),
+    MovePointerAfterDisplay {
+        target: DeviceId,
+        reply: tokio::sync::oneshot::Sender<Result<(), oink_routing::FocusLockError>>,
+    },
     GameMode(GameMode),
     KeyboardDisabled(bool),
     PeerAdmission(PeerAdmission),

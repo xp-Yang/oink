@@ -940,6 +940,11 @@ impl Driver {
             InputCommand::MovePointerTo(target) => {
                 let _ = self.adapter.router_mut().move_pointer_to(target);
             }
+            InputCommand::MovePointerAfterDisplay { target, reply } => {
+                if !reply.is_closed() {
+                    let _ = reply.send(self.adapter.router_mut().move_pointer_to(target));
+                }
+            }
             InputCommand::ReturnPointerHome => self.adapter.router_mut().return_pointer_home(),
             InputCommand::PeerAdmission(admission) => {
                 let peer = admission.boot.device_id;

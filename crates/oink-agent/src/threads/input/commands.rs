@@ -51,6 +51,7 @@ fn state_key(command: &InputCommand) -> Option<StateKey> {
         | AbortUpdate { .. }
         | LockFocusTo { .. }
         | MovePointerTo(_)
+        | MovePointerAfterDisplay { .. }
         | ReturnPointerHome
         | DiagnosticsSnapshot
         | Outbound { .. }

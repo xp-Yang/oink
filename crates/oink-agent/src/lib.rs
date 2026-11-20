@@ -16,6 +16,7 @@ pub mod clip;
 pub mod config;
 pub mod config_module;
 mod connection_quality;
+mod ddc;
 pub mod device_cards;
 pub mod device_controls;
 mod dnd;

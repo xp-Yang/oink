@@ -137,6 +137,7 @@ impl NodeOptions {
 }
 pub(crate) struct Inner {
     pub(crate) applied_hotkeys: Mutex<Option<Vec<crate::api::Hotkey>>>,
+    pub(crate) ddc: Option<crate::ddc::Ddc>,
     pub(crate) reports: crate::telemetry::Owner,
 
     pub(crate) update: Mutex<crate::update::Controller>,
@@ -386,6 +387,11 @@ impl Node {
         let node = Self {
             inner: Arc::new(Inner {
                 applied_hotkeys: Mutex::new(None),
+                ddc: if native_services && profile == Profile::User {
+                    crate::ddc::Ddc::load(&data_dir)
+                } else {
+                    None
+                },
                 reports: if components.reports {
                     crate::telemetry::Owner::new(&data_dir, config.settings.reports)
                 } else {

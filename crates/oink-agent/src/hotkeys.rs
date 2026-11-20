@@ -388,7 +388,14 @@ impl Node {
                 .and_then(|h| h.device)
                 && let Ok(input) = self.input_thread()
             {
-                input.send(crate::threads::input::InputCommand::MovePointerTo(target.0));
+                if !self
+                    .inner
+                    .ddc
+                    .as_ref()
+                    .is_some_and(|ddc| ddc.request(self, &input, target.0))
+                {
+                    input.send(crate::threads::input::InputCommand::MovePointerTo(target.0));
+                }
             }
             return;
         }

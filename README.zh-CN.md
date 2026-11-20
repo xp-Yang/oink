@@ -7,6 +7,8 @@
 
 # Oink — Oink Is Not only a KVM
 
+本修改版在 Oink v0.3.7 基础上增加了 [DDC/CI 输入源切换](DDC.md)。
+
 [English](README.md) | **简体中文** | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Oink 是 Oink Is Not only a KVM 的缩写，是一款在多台 Windows 和 Mac 设备间建立对等共享网络的现代软件。同时使用任何设备的键盘、鼠标、触摸板操控任意邻近设备，保持统一、原生的操作手感；将多台设备的音频通过连接至一台设备的扬声器或耳机播放；支持剪贴板共享和跨设备拖拽；支持局域网设备自动发现；默认加密传输。
