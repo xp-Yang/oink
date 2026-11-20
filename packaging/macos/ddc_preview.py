@@ -89,7 +89,7 @@ def main():
     ), indent=2) + '\n', encoding='utf-8')
 
     for binary in (*mac.iterdir(), helper / 'Contents/MacOS' / names['ui']):
-        run('xcrun', 'lipo', '-verify_arch', 'arm64', binary)
+        run('xcrun', 'lipo', binary, '-verify_arch', 'arm64')
         run('xcrun', 'strip', '-S', binary)
     for role, suffix in (('agent', '.agent'), ('crash_collector', '.crash-collector')):
         run('codesign', '--force', '--sign', '-', '--identifier', IDENTITY['bundle_id'] + suffix, mac / names[role])

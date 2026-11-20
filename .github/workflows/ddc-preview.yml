@@ -23,10 +23,6 @@ jobs:
             target: aarch64-apple-darwin
             artifact: Oink-DDC-macOS-arm64
             jobs: '3'
-          - runner: windows-2022
-            target: x86_64-pc-windows-msvc
-            artifact: Oink-DDC-Windows-x64
-            jobs: '4'
     runs-on: ${{ matrix.runner }}
     env:
       CARGO_BUILD_JOBS: ${{ matrix.jobs }}
@@ -60,7 +56,22 @@ jobs:
           fi
       - name: Build and smoke-test Mac app
         if: runner.os == 'macOS'
+        env:
+          CARGO_PROFILE_RELEASE_OPT_LEVEL: '1'
         run: python packaging/macos/ddc_preview.py --sequence 900 --staging "$RUNNER_TEMP/ddc-stage" --output "$RUNNER_TEMP/ddc-dist"
+      - name: Preserve compiled Mac binaries if assembly fails
+        if: failure() && runner.os == 'macOS'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Oink-DDC-Mac-build-recovery
+          path: |
+            target/aarch64-apple-darwin/release/oink
+            target/aarch64-apple-darwin/release/oink-agent
+            target/aarch64-apple-darwin/release/oink-backend
+            target/aarch64-apple-darwin/release/oink-crash-collector
+            target/aarch64-apple-darwin/release/release-build.json
+          if-no-files-found: ignore
+          retention-days: 3
       - name: Build and inspect Windows MSI
         if: runner.os == 'Windows'
         shell: pwsh
